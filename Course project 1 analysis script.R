@@ -1,52 +1,56 @@
----
-title: "PA1_template"
-author: "Jordan"
-date: "15/12/2019"
-output:
-  html_document:
-    Keep_md: TRUE
-
----
-
-## Introduction
-This is a markdown document which explains the analysis undertaken for the Coursera Reproducible Research Course Project 1.
+########################################################################
+#
+#
+# REPRODUCIBLE RESEARCH: COURSE PROJECT 1                                                 
+#
+#
+########################################################################
+# issues
+# None
 
 
-### Assignment Tasks
-1. Write code for reading in the dataset and/or processing the data
-2. Create a histogram of the total number of steps taken each day
-3. Calculate the Mean and median number of steps taken each day
-4. Create a time series plot of the average number of steps taken
-5. Find the 5-minute interval that, on average, contains the maximum number of steps
-6. Write code to describe and show a strategy for imputing missing data
-7. Create a histogram of the total number of steps taken each day after missing values are imputed
-8. Create a panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+########################################################################
+# OVERVIEW
+########################################################################
+
+#  WHAT DOES THIS SCRIPT DO?
+# 1. Code for reading in the dataset and/or processing the data
+# 2. Creates a Histogram of the total number of steps taken each day
+# 3. Calculates the Mean and median number of steps taken each day
+# 4. Plots a time series of the average number of steps taken
+# 5. Calculates the 5-minute interval that, on average, contains the maximum number of steps
+# 6. Code to describe and show a strategy for imputing missing data
+# 7. Creates a histogram of the total number of steps taken each day after missing values are imputed
+# 8. Creates a panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
 
 
-## The Assignment
 
 
-### Task 1
 
-##### Code for reading in the dataset and/or processing the data
-- Download and unzip the data
-- Load the data
-- Initial summaries identified there are 8 days completely missing data
-- Created a clean data table for the analysis
 
-```{r echo=FALSE, results='hide',message=FALSE}
+########################################################################
+# LIBRARIES AND SET WORKING DIRECTORY 
+########################################################################
 require(rmarkdown) #notebook
+require("knitr") #package to produce markdown
 require(data.table) #store data as tables
 require(ggplot2) #charting
 require(lubridate) #dates
 require(mice) #impute missing values
 require(gridExtra)
-```
 
-```{r echo=TRUE}
+
+# SET WORKING DIRECTORY
+scriptpath <- dirname(rstudioapi::getSourceEditorContext()$path) 
+setwd(scriptpath)
+getwd()
+
+
 ########################################################################
 # 1. CODE FOR READING IN THE DATASET AND/OR PROCESSING THE DATA
 ########################################################################
+
 #  DOWNLOAD DATA
 fileurl <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 filezip <- "data/repdata_data_activity.zip"
@@ -60,25 +64,30 @@ if(!file.exists(filezip)){
   ) +
     unzip(zipfile = filezip,exdir = "data/")# ignore the error message
 }
+
+
 #  LOAD DATA
 data.activity <- fread("data/activity.csv")
-
 #  PROCESS TRANSFORM DATA
-data.activity$date <- ymd(data.activity$date) #change date format
-
-#  INITIAL LOOK AT THE DATA 
-names(data.activity) # Column names
-dim(data.activity) # The number of variables, there should be 17,568 observations in this dataset.
-length(unique(data.activity$date)) # the number of days = 61 days
-length(unique(data.activity$date))/7 # the data is not in complete weeks
-head(data.activity) # what the table looks like
+data.activity$date <- as.Date(ymd(data.activity$date))
 
 
+# CHECKS 
+names(data.activity)
+dim(data.activity)
+# check, there should be 17,568 observations in this dataset.
+length(unique(data.activity$date)) #number of exact dates = 61 days
+length(unique(data.activity$date))/7 #data is not in complete weeks
+head(data.activity)
+anyNA(data.activity) # is there any missing data?
 # We know there are records where steps = NA
 md.pattern(data.activity) #2305 records with NA
 data.activity[is.na(steps),.(steps=length(steps)),by = c("date")] 
 # There are 8 dates with no data
 # Omitting these dates from the initial data set 
+
+
+
 
 #  CREATE DATA SET EXCLUDING DATES WITHOUT DATA
 data.activity2 <-
@@ -91,41 +100,49 @@ data.activity2 <-
                 ]
 
 
-```
 
 
-### Task 2
-
-##### Create a histogram of the total number of steps taken each day
-- The histogram indicates the data is relatively symetrical which means the average is a good approximation of the centre of the data.
-- Around 10k steps per day occurs most frequently
-- There were 8 dates completely missing data.  As the data related to complete days, it seems reasonable to exclude the dates from the charts. 
-
-```{r  fig.width=10, fig.height=6}
 ########################################################################
 # 2. HISTOGRAM OF THE TOTAL NUMBER OF STEPS TAKEN EACH DAY 
 ########################################################################
+
+# CHART TO SENSE CHECK THE DATA (VOLUME BY DAY)
+ggplot(data.activity2)+
+  aes(x=date,y=totalsteps)+
+  stat_summary(fun.y = sum, geom = "bar")+
+  ggtitle("There are days with either very high/low volumes of steps",
+          subtitle = " (days missing data excluded)")+
+  scale_x_date(name = "Date")+
+  scale_y_continuous(name = "Sum of steps by day")
+
+
 #  HISTOGRAM
 chart.step2.histogram <-
   ggplot(data.activity2, aes(totalsteps))+
   geom_histogram(bins = 15, fill="green",alpha=1/2)+
-  ggtitle(label="Histogram: Around 10k steps per day occurs most frequently")+ 
+  ggtitle(label="Histogram: Around 10k steps per day occurs most frequently")+
   scale_x_continuous(name = "Total number of steps taken each day",labels = scales::comma)+  
   scale_y_continuous(name = "Frequency")
 
-plot(chart.step2.histogram)
+# Some notes on histograms.
+# Histograms tell us 3 things:
+# 1. Average or median, which indicates what statistical tools to use ....
+# If the left side of a histogram resembles a mirror image of the right side, then the data are said to be symmetric. 
+# In this case, the mean (or average) is a good approximation for the center of the data. 
+# And we can therefore safely utilize statistical tools that use the mean to analyze our data, such as t-tests.
+# 
+# If the data are not symmetric, then the data are either left-skewed or right-skewed. 
+# If the data are skewed, then the mean may not provide a good estimate for the center of the data and represent where most of the data fall. 
+# In this case, you should consider using the median to evaluate the center of the data, rather than the mean.
+
+# 2. The span of the data, where the min and max values lie
+
+# 3. Outliers
+
+ggsave("figures/plot - step 2.png", plot = chart.step2.histogram, height = 10, width = 15)
 
 
-```
 
-### Task 3
-
-##### Calculate the Mean and median number of steps taken each day
-- The mean number of steps taken each day is 10,766 
-- The median number of steps taken each day is 10,765
-- The mean and median are pretty much equal which indicates the data is relatively symmetrical.
-
-```{r echo=TRUE}
 ########################################################################
 # 3. MEAN AND MEDIAN NUMBER OF STEPS TAKEN EACH DAY 
 ########################################################################
@@ -137,15 +154,9 @@ print(mean(data.activity2$totalsteps,na.rm = TRUE))
 print(median(data.activity2$totalsteps,na.rm = TRUE))
 
 
-```
 
 
-### Task 4
 
-##### Create a time series plot of the average number of steps taken
-
-
-```{r fig.width=10, fig.height=6}
 ########################################################################
 # 4. TIME SERIES PLOT OF THE AVERAGE NUMBER OF STEPS TAKEN
 ########################################################################
@@ -156,19 +167,14 @@ chart.4.timeseries <-
   ggtitle(label="Average steps per day")
 plot(chart.4.timeseries)
 
-```
+ggsave("figures/plot - step 4.png", plot = chart.4.timeseries, height = 10, width = 15)
+  
+  
 
 
-### Task 5
-
-##### Find the 5-minute interval that, on average, contains the maximum number of steps
-- On average, interval 835 contains the max. number of steps (206)
-
-```{r}
 ########################################################################
 # 5. THE 5-MINUTE INTERVAL THAT ON AVERAGE CONTAINS THE MAX. # OF STEPS
 ########################################################################
-
 # CREATE DATA TABLE SUMMARY
 data.avg.steps <- 
   data.activity[!is.na(steps),
@@ -182,17 +188,9 @@ x <- data.avg.steps[order(-rank(daily.mean.steps))]
 print(x[1,])
 
 
-```
 
 
 
-### Task 6
-
-##### Write code to describe and show a strategy for imputing missing data
-- The histogram indicated the data is symetrical.  The mean for each interval may be an appropriate method to impute missing data
-- In the previous task (5) we created a table containing the average number of steps for each interval
-- We can use the average to impute the missing data using the follow code
-```{r}
 ########################################################################
 # 6. CODE TO DESCRIBE AND SHOW A STRATEGY FOR IMPUTING MISSING DATA 
 ########################################################################
@@ -219,16 +217,9 @@ anyNA(data.imputed) # should equal 'FALSE'
 
 
 
-```
 
 
-### Task 7
 
-##### Create a histogram of the total number of steps taken each day after missing values are imputed
-- The histograms show the data before and after imputing the missing values
-- There is an increase in the most frequent result where the mean has been used to impute the missing values.
-
-```{r fig.width=10, fig.height=6}
 #########################################################################################
 # 7. HISTOGRAM OF THE TOTAL No. OF STEPS TAKEN EACH DAY AFTER MISSING VALUES ARE IMPUTED 
 #########################################################################################
@@ -242,16 +233,16 @@ data.imputed.summarised.byday <-
                by=c("date"
                )]
 
-# #  CHART TO SENSE CHECK THE DATA (VOLUME BY DAY)
-# chart.sense.check.imputed.data <-  
-# ggplot(data.imputed.summarised.byday)+
-#   aes(x=date,y=totalsteps)+
-#   stat_summary(fun.y = sum, geom = "bar")+
-#   ggtitle("The chart shows there are now no days with missing data",
-#           subtitle = "(data imputed using average steps per interval)")+
-#   scale_x_date(name = "Date")+
-#   scale_y_continuous(name = "Sum of steps by day")
-# plot(chart.sense.check.imputed.data)
+#  CHART TO SENSE CHECK THE DATA (VOLUME BY DAY)
+chart.sense.check.imputed.data <-  
+ggplot(data.imputed.summarised.byday)+
+  aes(x=date,y=totalsteps)+
+  stat_summary(fun.y = sum, geom = "bar")+
+  ggtitle("The chart shows there are now no days with missing data",
+          subtitle = "(data imputed using average steps per interval)")+
+  scale_x_date(name = "Date")+
+  scale_y_continuous(name = "Sum of steps by day")
+plot(chart.sense.check.imputed.data)
   
     
 #  HISTOGRAM WITH IMPUTED DATA FOR MISSING VALUES
@@ -263,6 +254,7 @@ chart.histogram.imputed <-
           worked, as the frequency around the center of the data has increased")+
   scale_x_continuous(name = "Total number of steps taken each day",labels = scales::comma)+  
   scale_y_continuous(name = "Frequency",breaks = seq(0,24, by = 2),limits = c(0,24))
+plot(chart.histogram.imputed)
 
 #  HISTOGRAM OF DATA EXCLUDING MISSING DATA
 chart.histogram.excluding.missingvalues <-
@@ -275,27 +267,17 @@ chart.histogram.excluding.missingvalues <-
 
 grid.arrange(chart.histogram.excluding.missingvalues,chart.histogram.imputed,ncol=2)
 
-
-```
-
-
-
+#  PRINT 
+chart.7 <- arrangeGrob(chart.histogram.excluding.missingvalues,chart.histogram.imputed,ncol=2)
+ggsave("figures/plot - step 7.png", plot = chart.7, height = 10, width = 20)
 
 
-### Task 8
-
-##### Create a panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
-- Below is a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
-- For this excercise I've used the dataset with the filled-in missing values
-- Created a variable to identify whether the date is a 'weekday' or 'weekend' 
-- During the week, on average, there are higher number of steps counted earlier in the day.
 
 
-```{r fig.width=10, fig.height=6}
 ############################################################################################################
 # 8. PANEL PLOT COMPARING THE AVERAGE NUMBER OF STEPS TAKEN PER 5 MIN. INTERVAL ACROSS WEEKDAYS AND WEEKENDS 
 ############################################################################################################
-# head(data.imputed)
+head(data.imputed)
 # CREATE VARIABLE DAY OF WEEK
 data.imputed$dayofweek <- as.factor(wday(data.imputed$date, label=TRUE))
 # CREATE VARIABLE WEEKDAY OR WEEKEND
@@ -325,7 +307,22 @@ chart.8.daytype <-
   scale_x_continuous(name="Time Interval (5 mins)")+
   ggtitle("On week days, the avg. number of steps are higher at the beginning of the day")+
   guides(alpha=FALSE,size=FALSE)
-plot(chart.8.daytype)
+
+ggsave("figures/plot - step 8.png", plot = chart.8.daytype, height = 10, width = 15)
 
 
-```
+
+# R VERSION INFORMATION
+writeLines(capture.output(sessionInfo()), "sessionInfo.txt") # Save R version details
+
+#########################################################################################
+# END OF SCRIPT 
+#########################################################################################
+
+ 
+# CLEAR MEMORY
+rm(list = ls()) # If you want to delete all the objects in the workspace and start with a clean slate
+gc() # Force R to release memory it is no longer using
+rmarkdown::render("PA1_template.Rmd", clean = FALSE) #code to retain .md file
+
+

@@ -2,10 +2,9 @@
 title: "PA1_template"
 author: "Jordan"
 date: "15/12/2019"
-output:
-  html_document:
-    Keep_md: TRUE
-
+output: 
+  html_document: 
+    keep_md: TRUE
 ---
 
 ## Introduction
@@ -34,16 +33,10 @@ This is a markdown document which explains the analysis undertaken for the Cours
 - Initial summaries identified there are 8 days completely missing data
 - Created a clean data table for the analysis
 
-```{r echo=FALSE, results='hide',message=FALSE}
-require(rmarkdown) #notebook
-require(data.table) #store data as tables
-require(ggplot2) #charting
-require(lubridate) #dates
-require(mice) #impute missing values
-require(gridExtra)
-```
 
-```{r echo=TRUE}
+
+
+```r
 ########################################################################
 # 1. CODE FOR READING IN THE DATASET AND/OR PROCESSING THE DATA
 ########################################################################
@@ -68,15 +61,81 @@ data.activity$date <- ymd(data.activity$date) #change date format
 
 #  INITIAL LOOK AT THE DATA 
 names(data.activity) # Column names
+```
+
+```
+## [1] "steps"    "date"     "interval"
+```
+
+```r
 dim(data.activity) # The number of variables, there should be 17,568 observations in this dataset.
+```
+
+```
+## [1] 17568     3
+```
+
+```r
 length(unique(data.activity$date)) # the number of days = 61 days
+```
+
+```
+## [1] 61
+```
+
+```r
 length(unique(data.activity$date))/7 # the data is not in complete weeks
+```
+
+```
+## [1] 8.714286
+```
+
+```r
 head(data.activity) # what the table looks like
+```
 
+```
+##    steps       date interval
+## 1:    NA 2012-10-01        0
+## 2:    NA 2012-10-01        5
+## 3:    NA 2012-10-01       10
+## 4:    NA 2012-10-01       15
+## 5:    NA 2012-10-01       20
+## 6:    NA 2012-10-01       25
+```
 
+```r
 # We know there are records where steps = NA
 md.pattern(data.activity) #2305 records with NA
+```
+
+![](PA1_template_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
+
+```
+##       date interval steps     
+## 15264    1        1     1    0
+## 2304     1        1     0    1
+##          0        0  2304 2304
+```
+
+```r
 data.activity[is.na(steps),.(steps=length(steps)),by = c("date")] 
+```
+
+```
+##          date steps
+## 1: 2012-10-01   288
+## 2: 2012-10-08   288
+## 3: 2012-11-01   288
+## 4: 2012-11-04   288
+## 5: 2012-11-09   288
+## 6: 2012-11-10   288
+## 7: 2012-11-14   288
+## 8: 2012-11-30   288
+```
+
+```r
 # There are 8 dates with no data
 # Omitting these dates from the initial data set 
 
@@ -89,8 +148,6 @@ data.activity2 <-
                 ),
                 by = c("date")
                 ]
-
-
 ```
 
 
@@ -101,7 +158,8 @@ data.activity2 <-
 - Around 10k steps per day occurs most frequently
 - There were 8 dates completely missing data.  As the data related to complete days, it seems reasonable to exclude the dates from the charts. 
 
-```{r  fig.width=10, fig.height=6}
+
+```r
 ########################################################################
 # 2. HISTOGRAM OF THE TOTAL NUMBER OF STEPS TAKEN EACH DAY 
 ########################################################################
@@ -114,9 +172,9 @@ chart.step2.histogram <-
   scale_y_continuous(name = "Frequency")
 
 plot(chart.step2.histogram)
-
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
 ### Task 3
 
@@ -125,18 +183,27 @@ plot(chart.step2.histogram)
 - The median number of steps taken each day is 10,765
 - The mean and median are pretty much equal which indicates the data is relatively symmetrical.
 
-```{r echo=TRUE}
+
+```r
 ########################################################################
 # 3. MEAN AND MEDIAN NUMBER OF STEPS TAKEN EACH DAY 
 ########################################################################
 
 #  MEAN
 print(mean(data.activity2$totalsteps,na.rm = TRUE))
+```
 
+```
+## [1] 10766.19
+```
+
+```r
 #  MEDIAN
 print(median(data.activity2$totalsteps,na.rm = TRUE))
+```
 
-
+```
+## [1] 10765
 ```
 
 
@@ -145,7 +212,8 @@ print(median(data.activity2$totalsteps,na.rm = TRUE))
 ##### Create a time series plot of the average number of steps taken
 
 
-```{r fig.width=10, fig.height=6}
+
+```r
 ########################################################################
 # 4. TIME SERIES PLOT OF THE AVERAGE NUMBER OF STEPS TAKEN
 ########################################################################
@@ -155,8 +223,9 @@ chart.4.timeseries <-
   geom_line()+
   ggtitle(label="Average steps per day")
 plot(chart.4.timeseries)
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
 ### Task 5
@@ -164,7 +233,8 @@ plot(chart.4.timeseries)
 ##### Find the 5-minute interval that, on average, contains the maximum number of steps
 - On average, interval 835 contains the max. number of steps (206)
 
-```{r}
+
+```r
 ########################################################################
 # 5. THE 5-MINUTE INTERVAL THAT ON AVERAGE CONTAINS THE MAX. # OF STEPS
 ########################################################################
@@ -180,8 +250,11 @@ data.avg.steps <-
 # SORT DATA BY VALUE DESCENDING ORDER
 x <- data.avg.steps[order(-rank(daily.mean.steps))]
 print(x[1,])
+```
 
-
+```
+##    interval daily.mean.steps
+## 1:      835         206.1698
 ```
 
 
@@ -192,15 +265,21 @@ print(x[1,])
 - The histogram indicated the data is symetrical.  The mean for each interval may be an appropriate method to impute missing data
 - In the previous task (5) we created a table containing the average number of steps for each interval
 - We can use the average to impute the missing data using the follow code
-```{r}
+
+```r
 ########################################################################
 # 6. CODE TO DESCRIBE AND SHOW A STRATEGY FOR IMPUTING MISSING DATA 
 ########################################################################
 
 #find the average for each interval
 dim(data.avg.steps) # check to make sure there's an average for each interval (288)
+```
 
+```
+## [1] 288   2
+```
 
+```r
 # CREATE TABLE OF INTERVALS WITH MISSING DATA 
 data.na <- data.activity[is.na(steps),2:3]
 # APPLY THE INTERVAL AVERAGE TO THE MISSING DATA
@@ -215,10 +294,18 @@ setcolorder(data.na.imputed,c("steps","date","interval"))
 data.imputed <- rbind(data.activity.imputed, data.na.imputed)
 # CHECKS
 dim(data.imputed) # should equal 17,568
+```
+
+```
+## [1] 17568     3
+```
+
+```r
 anyNA(data.imputed) # should equal 'FALSE'
+```
 
-
-
+```
+## [1] FALSE
 ```
 
 
@@ -228,7 +315,8 @@ anyNA(data.imputed) # should equal 'FALSE'
 - The histograms show the data before and after imputing the missing values
 - There is an increase in the most frequent result where the mean has been used to impute the missing values.
 
-```{r fig.width=10, fig.height=6}
+
+```r
 #########################################################################################
 # 7. HISTOGRAM OF THE TOTAL No. OF STEPS TAKEN EACH DAY AFTER MISSING VALUES ARE IMPUTED 
 #########################################################################################
@@ -274,9 +362,9 @@ chart.histogram.excluding.missingvalues <-
   scale_y_continuous(name = "Frequency",breaks = seq(0,24, by = 2),limits = c(0,24))
 
 grid.arrange(chart.histogram.excluding.missingvalues,chart.histogram.imputed,ncol=2)
-
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 
 
@@ -291,7 +379,8 @@ grid.arrange(chart.histogram.excluding.missingvalues,chart.histogram.imputed,nco
 - During the week, on average, there are higher number of steps counted earlier in the day.
 
 
-```{r fig.width=10, fig.height=6}
+
+```r
 ############################################################################################################
 # 8. PANEL PLOT COMPARING THE AVERAGE NUMBER OF STEPS TAKEN PER 5 MIN. INTERVAL ACROSS WEEKDAYS AND WEEKENDS 
 ############################################################################################################
@@ -326,6 +415,6 @@ chart.8.daytype <-
   ggtitle("On week days, the avg. number of steps are higher at the beginning of the day")+
   guides(alpha=FALSE,size=FALSE)
 plot(chart.8.daytype)
-
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
